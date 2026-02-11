@@ -1,10 +1,15 @@
+import { lazy } from "react";
 import routes from "./routes";
 
 const manifest = {
   plugin: "care-kutumba-fe",
   routes,
   extends: [],
-  components: {},
+  components: {
+    PatientRegistrationForm: lazy(
+      () => import("./components/pluggables/PatientRegistrationForm"),
+    ),
+  },
   devices: [],
 } as const;
 
