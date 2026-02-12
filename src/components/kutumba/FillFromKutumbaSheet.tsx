@@ -1,7 +1,11 @@
-import { FC, useState } from "react";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { useMutation } from "@tanstack/react-query";
-import { Search, Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
+import { FC, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -10,13 +14,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import MemberCard from "./MemberCard";
+
 import { kutumbaApis } from "@/apis/kutumba";
 import type { KutumbaMember } from "@/types/kutumba";
+
+import MemberCard from "./MemberCard";
 
 interface FillFromKutumbaSheetProps {
   open: boolean;
@@ -30,14 +32,14 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
   onMemberSelect,
 }) => {
   const [rcNumber, setRcNumber] = useState("");
-  const [selectedMember, setSelectedMember] = useState<KutumbaMember | null>(
+  const [selectedMemberIndex, setSelectedMemberIndex] = useState<number | null>(
     null,
   );
 
   const lookupMutation = useMutation({
     mutationFn: kutumbaApis.lookupByRcNumber,
     onSuccess: () => {
-      setSelectedMember(null);
+      setSelectedMemberIndex(null);
     },
   });
 
@@ -47,17 +49,10 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
   };
 
   const handleConfirm = () => {
-    if (selectedMember) {
-      onMemberSelect(selectedMember);
+    if (selectedMemberIndex !== null && members[selectedMemberIndex]) {
+      onMemberSelect(members[selectedMemberIndex]);
       onOpenChange(false);
-      resetState();
     }
-  };
-
-  const resetState = () => {
-    setRcNumber("");
-    setSelectedMember(null);
-    lookupMutation.reset();
   };
 
   const members = lookupMutation.data?.members ?? [];
@@ -66,7 +61,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
     <Sheet
       open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen) resetState();
+        if (!isOpen) setSelectedMemberIndex(null);
         onOpenChange(isOpen);
       }}
     >
@@ -128,12 +123,12 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
               </div>
             )}
 
-            {members.map((member) => (
+            {members.map((member, index) => (
               <MemberCard
-                key={member.health_id}
+                key={member.health_id || index}
                 member={member}
-                selected={selectedMember?.health_id === member.health_id}
-                onSelect={() => setSelectedMember(member)}
+                selected={selectedMemberIndex === index}
+                onSelect={() => setSelectedMemberIndex(index)}
               />
             ))}
           </div>
@@ -141,16 +136,13 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
 
         {members.length > 0 && (
           <SheetFooter className="border-t pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                onOpenChange(false);
-                resetState();
-              }}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleConfirm} disabled={!selectedMember}>
+            <Button
+              onClick={handleConfirm}
+              disabled={selectedMemberIndex === null}
+            >
               Fill Details
             </Button>
           </SheetFooter>

@@ -1,8 +1,11 @@
-import { FC } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import type { KutumbaMember } from "@/types/kutumba";
 import { Check, User } from "lucide-react";
+import { FC } from "react";
+
+import { cn } from "@/lib/utils";
+
+import { Card, CardContent } from "@/components/ui/card";
+
+import type { KutumbaMember } from "@/types/kutumba";
 
 interface MemberCardProps {
   member: KutumbaMember;
@@ -51,9 +54,7 @@ const MemberCard: FC<MemberCardProps> = ({ member, selected, onSelect }) => {
             <span>Mobile: {member.mobile_no}</span>
             <span>RC: {member.rc_number}</span>
             {member.health_id && (
-              <span className="col-span-2">
-                Health ID: {member.health_id}
-              </span>
+              <span className="col-span-2">Health ID: {member.health_id}</span>
             )}
           </div>
         </div>
