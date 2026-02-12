@@ -2,7 +2,10 @@ import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
+
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
+
+import { kutumbaConfig } from "@/config";
 import type { KutumbaMember } from "@/types/kutumba";
 
 type PatientRegistrationFormProps = {
@@ -10,6 +13,22 @@ type PatientRegistrationFormProps = {
   facilityId?: string;
   patientId?: string;
 };
+
+/**
+ * Mapping from Kutumba rc_type values to env-configured tag IDs.
+ * PHH (Priority Household) maps to BPL, NPHH (Non-Priority) maps to APL.
+ */
+const RC_TYPE_TO_TAG_ID: Record<string, string | undefined> = {
+  BPL: kutumbaConfig.bplTagId,
+  APL: kutumbaConfig.aplTagId,
+  PHH: kutumbaConfig.bplTagId,
+  NPHH: kutumbaConfig.aplTagId,
+};
+
+const ALL_RATION_TAG_IDS = [
+  kutumbaConfig.bplTagId,
+  kutumbaConfig.aplTagId,
+].filter(Boolean) as string[];
 
 /**
  * Parses a date string in DD/MM/YYYY format and returns YYYY-MM-DD.
@@ -31,20 +50,21 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     // Don't overwrite fields if editing an existing patient
     if (patientId) return;
 
-    form.setValue("name", member.name);
+    form.setValue("name", member.name, { shouldDirty: true });
 
     if (member.mobile_no) {
       form.setValue(
         "phone_number",
         "+91" + member.mobile_no.replace("+91", ""),
+        { shouldDirty: true },
       );
     }
 
     if (member.date_of_birth) {
       const dob = parseKutumbaDate(member.date_of_birth);
       if (dob) {
-        form.setValue("yob_or_dob", "dob");
-        form.setValue("date_of_birth", dob);
+        form.setValue("age_or_dob", "dob", { shouldDirty: true });
+        form.setValue("date_of_birth", dob, { shouldDirty: true });
       }
     }
 
@@ -54,7 +74,10 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
         F: "female",
         O: "transgender",
       };
-      form.setValue("gender", genderMap[member.gender] ?? "transgender");
+      const mappedGender = genderMap[member.gender];
+      if (mappedGender) {
+        form.setValue("gender", mappedGender, { shouldDirty: true });
+      }
     }
 
     if (member.address) {
@@ -64,12 +87,28 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
         .replace(/\.\s*,/g, "")
         .replace(/,\s*,/g, ",")
         .replace(/^[,\s]+|[,\s]+$/g, "");
-      form.setValue("address", cleanAddress);
-      form.setValue("permanent_address", cleanAddress);
+      form.setValue("address", cleanAddress, { shouldDirty: true });
+      form.setValue("permanent_address", cleanAddress, { shouldDirty: true });
     }
 
     if (member.pincode) {
-      form.setValue("pincode", Number(member.pincode));
+      form.setValue("pincode", Number(member.pincode), { shouldDirty: true });
+    }
+
+    // Auto-select the matching ration card tag based on rc_type
+    // rc_type can be BPL/APL or PHH/NPHH — mapped via env-configured tag IDs
+    if (member.rc_type) {
+      const tagId = RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()];
+      if (tagId) {
+        const currentTags: string[] = form.getValues("tags") ?? [];
+        // Remove any existing ration card tags, then add the matching one
+        const filteredTags = currentTags.filter(
+          (id) => !ALL_RATION_TAG_IDS.includes(id),
+        );
+        form.setValue("tags", [...filteredTags, tagId], {
+          shouldDirty: true,
+        });
+      }
     }
   };
 
