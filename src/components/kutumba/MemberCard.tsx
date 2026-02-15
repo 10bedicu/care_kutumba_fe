@@ -21,8 +21,9 @@ const MemberCard: FC<MemberCardProps> = ({ member, selected, onSelect }) => {
     <Card
       className={cn(
         "cursor-pointer transition-all hover:border-primary-500",
-        selected &&
-          "border-primary-700 bg-primary-50 ring-1 ring-primary-700 dark:border-primary-400 dark:bg-primary-950 dark:ring-primary-400",
+        selected
+          ? "border-2 border-primary-700 bg-primary-50 dark:border-primary-400 dark:bg-primary-950"
+          : "border border-gray-200",
       )}
       onClick={onSelect}
     >
@@ -49,12 +50,17 @@ const MemberCard: FC<MemberCardProps> = ({ member, selected, onSelect }) => {
             </span>
           </div>
           <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-            <span>DOB: {member.date_of_birth}</span>
-            <span>Gender: {genderLabel}</span>
-            <span>Mobile: {member.mobile_no}</span>
-            <span>RC: {member.rc_number}</span>
+            {member.date_of_birth && <span>DOB: {member.date_of_birth}</span>}
+            {member.gender && <span>Gender: {genderLabel}</span>}
+            {member.mobile_no && <span>Mobile: {member.mobile_no}</span>}
+            {member.rc_number && <span>RC: {member.rc_number}</span>}
             {member.health_id && (
               <span className="col-span-2">Health ID: {member.health_id}</span>
+            )}
+            {member.education_id && (
+              <span className="col-span-2">
+                Education ID: {member.education_id}
+              </span>
             )}
           </div>
         </div>

@@ -23,7 +23,7 @@ import MemberCard from "./MemberCard";
 interface FillFromKutumbaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMemberSelect: (member: KutumbaMember) => void;
+  onMemberSelect: (member: KutumbaMember, allMembers: KutumbaMember[]) => void;
 }
 
 const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
@@ -50,7 +50,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
 
   const handleConfirm = () => {
     if (selectedMemberIndex !== null && members[selectedMemberIndex]) {
-      onMemberSelect(members[selectedMemberIndex]);
+      onMemberSelect(members[selectedMemberIndex], members);
       onOpenChange(false);
     }
   };
@@ -69,17 +69,17 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
         <SheetHeader>
           <SheetTitle>Fill from Kutumba</SheetTitle>
           <SheetDescription>
-            Enter an RC number to search for family members in the Kutumba
-            database.
+            Enter a Ration Card number to search for family members in the
+            Kutumba database.
           </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-2 pt-4">
-          <Label htmlFor="rc-number">RC Number</Label>
+          <Label htmlFor="rc-number">Ration Card Number</Label>
           <div className="flex gap-2">
             <Input
               id="rc-number"
-              placeholder="Enter RC number"
+              placeholder="Enter Ration Card number"
               value={rcNumber}
               onChange={(e) => setRcNumber(e.target.value)}
               onKeyDown={(e) => {
