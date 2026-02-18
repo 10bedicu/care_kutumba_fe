@@ -54,6 +54,7 @@ const MemberCard: FC<MemberCardProps> = ({ member, selected, onSelect }) => {
             {member.gender && <span>Gender: {genderLabel}</span>}
             {member.mobile_no && <span>Mobile: {member.mobile_no}</span>}
             {member.rc_number && <span>RC: {member.rc_number}</span>}
+            {member.pincode && <span>Pincode: {member.pincode}</span>}
             {member.health_id && (
               <span className="col-span-2">Health ID: {member.health_id}</span>
             )}

@@ -14,6 +14,7 @@ type PatientRegistrationFormProps = {
   form: UseFormReturn;
   facilityId?: string;
   patientId?: string;
+  submitForm?: () => void;
 };
 
 /**
@@ -92,6 +93,7 @@ function fillIdentifiers(form: UseFormReturn, member: KutumbaMember) {
 const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   form,
   patientId,
+  submitForm,
 }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -206,6 +208,9 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     fillIdentifiers(form, member);
 
     toast.success(`Details filled from Kutumba for ${member.name}`);
+
+    // Submit the form via the prop passed from care_fe
+    submitForm?.();
   };
 
   return (

@@ -143,7 +143,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
               onClick={handleConfirm}
               disabled={selectedMemberIndex === null}
             >
-              Fill Details
+              Register Patient
             </Button>
           </SheetFooter>
         )}
