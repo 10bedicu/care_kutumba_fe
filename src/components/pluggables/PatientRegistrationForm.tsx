@@ -1,12 +1,14 @@
 import { Users } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
+import HealthcareServiceSelect from "@/components/kutumba/HealthcareServiceSelect";
 
+import { bookAppointmentForToday } from "@/apis/scheduling";
 import { kutumbaConfig } from "@/config";
 import type { KutumbaMember } from "@/types/kutumba";
 
@@ -14,6 +16,9 @@ type PatientRegistrationFormProps = {
   form: UseFormReturn;
   facilityId?: string;
   patientId?: string;
+  registerOnPatientCreated?: (
+    callback: (patient: { id: string }) => Promise<void>,
+  ) => () => void;
 };
 
 /**
@@ -91,9 +96,46 @@ function fillIdentifiers(form: UseFormReturn, member: KutumbaMember) {
 
 const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   form,
+  facilityId,
   patientId,
+  registerOnPatientCreated,
 }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const selectedServiceRef = useRef(selectedServiceId);
+
+  // Keep ref in sync so the callback always reads the latest value
+  useEffect(() => {
+    selectedServiceRef.current = selectedServiceId;
+  }, [selectedServiceId]);
+
+  const handleBookAppointment = useCallback(
+    async (patient: { id: string }) => {
+      const serviceId = selectedServiceRef.current;
+      if (!serviceId || !facilityId) return;
+
+      try {
+        await bookAppointmentForToday({
+          facilityId,
+          serviceId,
+          patientId: patient.id,
+        });
+        toast.success("Appointment booked successfully");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to book appointment";
+        toast.error(message);
+      }
+    },
+    [facilityId],
+  );
+
+  // Register the callback with the host when available
+  useEffect(() => {
+    if (!registerOnPatientCreated) return;
+    const unregister = registerOnPatientCreated(handleBookAppointment);
+    return unregister;
+  }, [registerOnPatientCreated, handleBookAppointment]);
 
   const handleMemberSelect = (
     member: KutumbaMember,
@@ -209,7 +251,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   };
 
   return (
-    <div className="care-kutumba-fe-container flex justify-end w-full">
+    <div className="care-kutumba-fe-container flex flex-col gap-3 w-full">
       <Button
         type="button"
         variant="outline"
@@ -219,6 +261,14 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
         <Users className="size-4" />
         Fill from Kutumba
       </Button>
+
+      {!patientId && facilityId && (
+        <HealthcareServiceSelect
+          facilityId={facilityId}
+          value={selectedServiceId}
+          onChange={setSelectedServiceId}
+        />
+      )}
 
       <FillFromKutumbaSheet
         open={sheetOpen}
