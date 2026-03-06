@@ -209,8 +209,10 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
 
     toast.success(`Details filled from Kutumba for ${member.name}`);
 
-    // Submit the form via the prop passed from care_fe
-    submitForm?.();
+    if (kutumbaConfig.autoSubmitOnFill) {
+      toast.info("Auto-submitting form after filling from Kutumba");
+      submitForm?.();
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly REACT_KUTUMBA_EDUCATION_ID_IDENTIFIER_ID?: string;
   readonly REACT_KUTUMBA_STUDENT_UNVERIFIED_TAG_ID?: string;
   readonly REACT_KUTUMBA_PWD_UNVERIFIED_TAG_ID?: string;
+  readonly REACT_KUTUMBA_AUTO_SUBMIT_ON_FILL?: string;
 }
 
 interface ImportMeta {

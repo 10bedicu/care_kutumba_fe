@@ -14,4 +14,7 @@ export const kutumbaConfig = {
   pwdUnverifiedTagId: import.meta.env.REACT_KUTUMBA_PWD_UNVERIFIED_TAG_ID as
     | string
     | undefined,
+
+  autoSubmitOnFill:
+    import.meta.env.REACT_KUTUMBA_AUTO_SUBMIT_ON_FILL === "true",
 };
