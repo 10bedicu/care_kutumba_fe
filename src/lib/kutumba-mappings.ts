@@ -35,3 +35,19 @@ export const IDENTIFIER_FIELD_MAP: {
   { configId: kutumbaConfig.healthIdIdentifierId, field: "health_id" },
   { configId: kutumbaConfig.educationIdIdentifierId, field: "education_id" },
 ];
+
+export const GENDER_MAP: Record<string, string> = {
+  M: "male",
+  F: "female",
+  O: "transgender",
+};
+
+/**
+ * Parses a date string in DD/MM/YYYY format and returns YYYY-MM-DD.
+ */
+export function parseKutumbaDate(dateStr: string): string | undefined {
+  const parts = dateStr.split("/");
+  if (parts.length !== 3) return undefined;
+  const [day, month, year] = parts;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}

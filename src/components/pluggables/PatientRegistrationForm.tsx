@@ -7,6 +7,7 @@ import {
   ALL_MANAGED_TAG_IDS,
   IDENTIFIER_FIELD_MAP,
   RC_TYPE_TO_TAG_ID,
+  parseKutumbaDate,
 } from "@/lib/kutumba-mappings";
 
 import { Button } from "@/components/ui/button";
@@ -22,16 +23,6 @@ type PatientRegistrationFormProps = {
   patientId?: string;
   submitForm?: () => void;
 };
-
-/**
- * Parses a date string in DD/MM/YYYY format and returns YYYY-MM-DD.
- */
-function parseKutumbaDate(dateStr: string): string | undefined {
-  const parts = dateStr.split("/");
-  if (parts.length !== 3) return undefined;
-  const [day, month, year] = parts;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
 
 /**
  * Finds the identifier slot in the form arrays and sets or clears its value.

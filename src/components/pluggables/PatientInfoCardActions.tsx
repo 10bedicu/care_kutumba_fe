@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link2, Loader2 } from "lucide-react";
+import { AlertTriangle, Link2, Loader2 } from "lucide-react";
 import { FC, useState } from "react";
 import { toast } from "sonner";
 
 import {
   ALL_MANAGED_TAG_IDS,
+  GENDER_MAP,
   IDENTIFIER_FIELD_MAP,
   RC_TYPE_TO_TAG_ID,
+  parseKutumbaDate,
 } from "@/lib/kutumba-mappings";
 import { request } from "@/lib/request";
 
@@ -32,12 +34,113 @@ import type { TagConfig } from "@/types/tagConfig";
 type PatientInfoCardActionsProps = {
   patient: {
     id: string;
+    name: string;
+    gender: string;
+    date_of_birth: string | null;
+    phone_number: string;
     instance_tags: TagConfig[];
     instance_identifiers?: { config: { id: string }; value: string }[];
   };
   facilityId: string;
   className?: string;
 };
+
+interface Mismatch {
+  field: string;
+  patient: string;
+  kutumba: string;
+}
+
+function detectMismatches(
+  patient: PatientInfoCardActionsProps["patient"],
+  member: KutumbaMember,
+): Mismatch[] {
+  const mismatches: Mismatch[] = [];
+
+  // Name
+  if (
+    member.name &&
+    patient.name &&
+    member.name.toLowerCase() !== patient.name.toLowerCase()
+  ) {
+    mismatches.push({
+      field: "Name",
+      patient: patient.name,
+      kutumba: member.name,
+    });
+  }
+
+  // Gender
+  const kutumbaGender = member.gender ? GENDER_MAP[member.gender] : undefined;
+  if (kutumbaGender && patient.gender && kutumbaGender !== patient.gender) {
+    mismatches.push({
+      field: "Gender",
+      patient: patient.gender,
+      kutumba: kutumbaGender,
+    });
+  }
+
+  // Date of birth
+  const kutumbaDob = member.date_of_birth
+    ? parseKutumbaDate(member.date_of_birth)
+    : undefined;
+  if (
+    kutumbaDob &&
+    patient.date_of_birth &&
+    kutumbaDob !== patient.date_of_birth
+  ) {
+    mismatches.push({
+      field: "Date of Birth",
+      patient: patient.date_of_birth,
+      kutumba: kutumbaDob,
+    });
+  }
+
+  // Tags — show current vs incoming ration card tag
+  const currentRationTag = patient.instance_tags.find((t) =>
+    ALL_MANAGED_TAG_IDS.includes(t.id),
+  );
+  const newRationTagId = member.rc_type
+    ? RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()]
+    : undefined;
+  if (
+    newRationTagId &&
+    currentRationTag &&
+    currentRationTag.id !== newRationTagId
+  ) {
+    const newTagDisplay = member.rc_type.toUpperCase();
+    mismatches.push({
+      field: "Ration Card Type",
+      patient: currentRationTag.display,
+      kutumba: newTagDisplay,
+    });
+  }
+
+  // Identifiers — compare existing RC number, health ID, education ID
+  const identifiers = patient.instance_identifiers ?? [];
+  for (const { configId, field } of IDENTIFIER_FIELD_MAP) {
+    if (!configId) continue;
+    const kutumbaValue = member[field];
+    if (!kutumbaValue) continue;
+
+    const existing = identifiers.find((i) => i.config.id === configId);
+    if (existing && existing.value && existing.value !== String(kutumbaValue)) {
+      const label =
+        field === "rc_number"
+          ? "RC Number"
+          : field === "health_id"
+            ? "Health ID"
+            : "Education ID";
+      mismatches.push({
+        field: label,
+        patient: existing.value,
+        kutumba: String(kutumbaValue),
+      });
+    }
+  }
+
+  return mismatches;
+}
 
 async function syncTagsAndIdentifiers(
   patientId: string,
@@ -169,10 +272,53 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Link Kutumba Data?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will update tags and identifiers for this patient using
-              Kutumba data for <strong>{pendingMember?.name}</strong> (RC:{" "}
-              {pendingMember?.rc_number}).
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  This will update tags and identifiers for this patient using
+                  Kutumba data for <strong>{pendingMember?.name}</strong> (RC:{" "}
+                  {pendingMember?.rc_number}).
+                </p>
+
+                {pendingMember &&
+                  (() => {
+                    const mismatches = detectMismatches(patient, pendingMember);
+                    if (mismatches.length === 0) return null;
+                    return (
+                      <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950">
+                        <div className="flex items-center gap-2 font-medium text-yellow-800 dark:text-yellow-300">
+                          <AlertTriangle className="size-4" />
+                          Data mismatch detected
+                        </div>
+                        <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
+                          The selected member&apos;s data differs from the
+                          current patient record. Please verify this is the
+                          correct person.
+                        </p>
+                        <table className="mt-2 w-full text-sm">
+                          <thead>
+                            <tr className="text-left text-yellow-800 dark:text-yellow-300">
+                              <th className="py-1 pr-2">Field</th>
+                              <th className="py-1 pr-2">Patient</th>
+                              <th className="py-1">Kutumba</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-yellow-700 dark:text-yellow-400">
+                            {mismatches.map((m) => (
+                              <tr key={m.field}>
+                                <td className="py-1 pr-2 font-medium">
+                                  {m.field}
+                                </td>
+                                <td className="py-1 pr-2">{m.patient}</td>
+                                <td className="py-1">{m.kutumba}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
