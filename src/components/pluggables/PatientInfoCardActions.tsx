@@ -1,0 +1,190 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link2, Loader2 } from "lucide-react";
+import { FC, useState } from "react";
+import { toast } from "sonner";
+
+import {
+  ALL_MANAGED_TAG_IDS,
+  IDENTIFIER_FIELD_MAP,
+  RC_TYPE_TO_TAG_ID,
+} from "@/lib/kutumba-mappings";
+import { request } from "@/lib/request";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+
+import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
+
+import { patientApis } from "@/apis/kutumba";
+import { kutumbaConfig } from "@/config";
+import type { KutumbaMember } from "@/types/kutumba";
+import type { TagConfig } from "@/types/tagConfig";
+
+type PatientInfoCardActionsProps = {
+  patient: {
+    id: string;
+    instance_tags: TagConfig[];
+    instance_identifiers?: { config: { id: string }; value: string }[];
+  };
+  facilityId: string;
+  className?: string;
+};
+
+async function syncTagsAndIdentifiers(
+  patientId: string,
+  member: KutumbaMember,
+  currentTags: TagConfig[],
+) {
+  const pathParams = { id: patientId };
+
+  // Determine which managed tags the patient currently has
+  const currentManagedTagIds = currentTags
+    .map((t) => t.id)
+    .filter((id) => ALL_MANAGED_TAG_IDS.includes(id));
+
+  // Determine new tags from the Kutumba member
+  const newTagIds: string[] = [];
+
+  if (member.rc_type) {
+    const tagId = RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()];
+    if (tagId) newTagIds.push(tagId);
+  }
+
+  if (member.education_id && kutumbaConfig.studentUnverifiedTagId) {
+    newTagIds.push(kutumbaConfig.studentUnverifiedTagId);
+  }
+
+  if (member.disability_applicant_no && kutumbaConfig.pwdUnverifiedTagId) {
+    newTagIds.push(kutumbaConfig.pwdUnverifiedTagId);
+  }
+
+  // Remove old managed tags that aren't in the new set
+  const tagsToRemove = currentManagedTagIds.filter(
+    (id) => !newTagIds.includes(id),
+  );
+  if (tagsToRemove.length > 0) {
+    await request(patientApis.removeInstanceTags, {
+      pathParams,
+      body: { tags: tagsToRemove },
+    });
+  }
+
+  // Add new tags that aren't already present
+  const existingTagIds = currentTags.map((t) => t.id);
+  const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
+  if (tagsToAdd.length > 0) {
+    await request(patientApis.setInstanceTags, {
+      pathParams,
+      body: { tags: tagsToAdd },
+    });
+  }
+
+  // Update identifiers
+  for (const { configId, field } of IDENTIFIER_FIELD_MAP) {
+    if (!configId) continue;
+    const value = member[field];
+    if (!value) continue;
+
+    await request(patientApis.updateIdentifier, {
+      pathParams,
+      body: { config: configId, value: String(value) },
+    });
+  }
+}
+
+const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
+  patient,
+  className,
+}) => {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [pendingMember, setPendingMember] = useState<KutumbaMember | null>(
+    null,
+  );
+  const queryClient = useQueryClient();
+
+  const linkMutation = useMutation({
+    mutationFn: ({ member }: { member: KutumbaMember }) =>
+      syncTagsAndIdentifiers(patient.id, member, patient.instance_tags),
+    onSuccess: (_data, { member }) => {
+      toast.success(`Kutumba data linked for ${member.name}`);
+      queryClient.invalidateQueries({ queryKey: ["patient-verify"] });
+    },
+    onError: () => {
+      toast.error("Failed to link Kutumba data. Please try again.");
+    },
+    onSettled: () => {
+      setPendingMember(null);
+    },
+  });
+
+  const handleMemberSelect = (member: KutumbaMember) => {
+    setPendingMember(member);
+  };
+
+  const handleConfirmLink = () => {
+    if (pendingMember) {
+      linkMutation.mutate({ member: pendingMember });
+    }
+  };
+
+  return (
+    <div className={`care-kutumba-fe-container ${className ?? ""}`}>
+      <Button
+        type="button"
+        variant="outline"
+        className="text-primary border-primary"
+        onClick={() => setSheetOpen(true)}
+        disabled={linkMutation.isPending}
+      >
+        {linkMutation.isPending ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Link2 className="size-4" />
+        )}
+        Link Kutumba
+      </Button>
+
+      <FillFromKutumbaSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onMemberSelect={handleMemberSelect}
+        confirmLabel="Link Patient"
+      />
+
+      <AlertDialog
+        open={pendingMember !== null && !linkMutation.isPending}
+        onOpenChange={(open) => {
+          if (!open) setPendingMember(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Link Kutumba Data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will update tags and identifiers for this patient using
+              Kutumba data for <strong>{pendingMember?.name}</strong> (RC:{" "}
+              {pendingMember?.rc_number}).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmLink}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default PatientInfoCardActions;

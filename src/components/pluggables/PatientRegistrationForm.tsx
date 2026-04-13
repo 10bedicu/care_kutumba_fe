@@ -3,6 +3,12 @@ import { FC, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
+import {
+  ALL_MANAGED_TAG_IDS,
+  IDENTIFIER_FIELD_MAP,
+  RC_TYPE_TO_TAG_ID,
+} from "@/lib/kutumba-mappings";
+
 import { Button } from "@/components/ui/button";
 
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
@@ -16,41 +22,6 @@ type PatientRegistrationFormProps = {
   patientId?: string;
   submitForm?: () => void;
 };
-
-/**
- * Mapping from Kutumba rc_type values to env-configured tag IDs.
- * PHH (Priority Household) maps to BPL, NPHH (Non-Priority) maps to APL.
- */
-const RC_TYPE_TO_TAG_ID: Record<string, string | undefined> = {
-  BPL: kutumbaConfig.bplTagId,
-  APL: kutumbaConfig.aplTagId,
-  PHH: kutumbaConfig.bplTagId,
-  NPHH: kutumbaConfig.aplTagId,
-};
-
-const ALL_RATION_TAG_IDS = [
-  kutumbaConfig.bplTagId,
-  kutumbaConfig.aplTagId,
-].filter(Boolean) as string[];
-
-/** All tag IDs that this plug manages — cleared before re-applying. */
-const ALL_MANAGED_TAG_IDS = [
-  ...ALL_RATION_TAG_IDS,
-  kutumbaConfig.studentUnverifiedTagId,
-  kutumbaConfig.pwdUnverifiedTagId,
-].filter(Boolean) as string[];
-
-/**
- * Identifier config ID → Kutumba member field mapping.
- */
-const IDENTIFIER_FIELD_MAP: {
-  configId: string | undefined;
-  field: keyof KutumbaMember;
-}[] = [
-  { configId: kutumbaConfig.rcNumberIdentifierId, field: "rc_number" },
-  { configId: kutumbaConfig.healthIdIdentifierId, field: "health_id" },
-  { configId: kutumbaConfig.educationIdIdentifierId, field: "education_id" },
-];
 
 /**
  * Parses a date string in DD/MM/YYYY format and returns YYYY-MM-DD.

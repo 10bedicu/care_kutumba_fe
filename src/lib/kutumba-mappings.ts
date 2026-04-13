@@ -1,0 +1,37 @@
+import { kutumbaConfig } from "@/config";
+import type { KutumbaMember } from "@/types/kutumba";
+
+/**
+ * Mapping from Kutumba rc_type values to env-configured tag IDs.
+ * PHH (Priority Household) maps to BPL, NPHH (Non-Priority) maps to APL.
+ */
+export const RC_TYPE_TO_TAG_ID: Record<string, string | undefined> = {
+  BPL: kutumbaConfig.bplTagId,
+  APL: kutumbaConfig.aplTagId,
+  PHH: kutumbaConfig.bplTagId,
+  NPHH: kutumbaConfig.aplTagId,
+};
+
+const ALL_RATION_TAG_IDS = [
+  kutumbaConfig.bplTagId,
+  kutumbaConfig.aplTagId,
+].filter(Boolean) as string[];
+
+/** All tag IDs that this plugin manages — cleared before re-applying. */
+export const ALL_MANAGED_TAG_IDS = [
+  ...ALL_RATION_TAG_IDS,
+  kutumbaConfig.studentUnverifiedTagId,
+  kutumbaConfig.pwdUnverifiedTagId,
+].filter(Boolean) as string[];
+
+/**
+ * Identifier config ID → Kutumba member field mapping.
+ */
+export const IDENTIFIER_FIELD_MAP: {
+  configId: string | undefined;
+  field: keyof KutumbaMember;
+}[] = [
+  { configId: kutumbaConfig.rcNumberIdentifierId, field: "rc_number" },
+  { configId: kutumbaConfig.healthIdIdentifierId, field: "health_id" },
+  { configId: kutumbaConfig.educationIdIdentifierId, field: "education_id" },
+];

@@ -24,12 +24,14 @@ interface FillFromKutumbaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMemberSelect: (member: KutumbaMember, allMembers: KutumbaMember[]) => void;
+  confirmLabel?: string;
 }
 
 const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
   open,
   onOpenChange,
   onMemberSelect,
+  confirmLabel = "Register Patient",
 }) => {
   const [rcNumber, setRcNumber] = useState("");
   const [selectedMemberIndex, setSelectedMemberIndex] = useState<number | null>(
@@ -143,7 +145,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
               onClick={handleConfirm}
               disabled={selectedMemberIndex === null}
             >
-              Register Patient
+              {confirmLabel}
             </Button>
           </SheetFooter>
         )}
