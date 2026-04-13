@@ -1,6 +1,7 @@
 import { HttpMethod, apiRoutes, mutate } from "@/lib/request";
 
 import type { KutumbaLookupResponse } from "@/types/kutumba";
+import type { PatientRead } from "@/types/patient";
 
 const kutumbaRoutes = apiRoutes({
   lookupByRcNumber: {
@@ -16,19 +17,19 @@ const patientRoutes = apiRoutes({
     method: HttpMethod.POST,
     path: "/api/v1/patient/{id}/set_instance_tags/",
     TRequest: {} as { tags: string[] },
-    TResponse: {} as Record<string, never>,
+    TResponse: {} as PatientRead,
   },
   removeInstanceTags: {
     method: HttpMethod.POST,
     path: "/api/v1/patient/{id}/remove_instance_tags/",
     TRequest: {} as { tags: string[] },
-    TResponse: {} as Record<string, never>,
+    TResponse: {} as PatientRead,
   },
   updateIdentifier: {
     method: HttpMethod.POST,
     path: "/api/v1/patient/{id}/update_identifier/",
     TRequest: {} as { config: string; value: string },
-    TResponse: {} as Record<string, never>,
+    TResponse: undefined as unknown as void,
   },
 });
 

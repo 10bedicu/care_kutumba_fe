@@ -10,7 +10,7 @@ import {
   RC_TYPE_TO_TAG_ID,
   parseKutumbaDate,
 } from "@/lib/kutumba-mappings";
-import { request } from "@/lib/request";
+import { mutate } from "@/lib/request";
 
 import {
   AlertDialog,
@@ -29,18 +29,11 @@ import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
 import { patientApis } from "@/apis/kutumba";
 import { kutumbaConfig } from "@/config";
 import type { KutumbaMember } from "@/types/kutumba";
+import type { PatientRead } from "@/types/patient";
 import type { TagConfig } from "@/types/tagConfig";
 
 type PatientInfoCardActionsProps = {
-  patient: {
-    id: string;
-    name: string;
-    gender: string;
-    date_of_birth: string | null;
-    phone_number: string;
-    instance_tags: TagConfig[];
-    instance_identifiers?: { config: { id: string }; value: string }[];
-  };
+  patient: PatientRead;
   facilityId: string;
   className?: string;
 };
@@ -175,9 +168,8 @@ async function syncTagsAndIdentifiers(
     (id) => !newTagIds.includes(id),
   );
   if (tagsToRemove.length > 0) {
-    await request(patientApis.removeInstanceTags, {
-      pathParams,
-      body: { tags: tagsToRemove },
+    await mutate(patientApis.removeInstanceTags, { pathParams })({
+      tags: tagsToRemove,
     });
   }
 
@@ -185,9 +177,8 @@ async function syncTagsAndIdentifiers(
   const existingTagIds = currentTags.map((t) => t.id);
   const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
   if (tagsToAdd.length > 0) {
-    await request(patientApis.setInstanceTags, {
-      pathParams,
-      body: { tags: tagsToAdd },
+    await mutate(patientApis.setInstanceTags, { pathParams })({
+      tags: tagsToAdd,
     });
   }
 
@@ -197,9 +188,9 @@ async function syncTagsAndIdentifiers(
     const value = member[field];
     if (!value) continue;
 
-    await request(patientApis.updateIdentifier, {
-      pathParams,
-      body: { config: configId, value: String(value) },
+    await mutate(patientApis.updateIdentifier, { pathParams })({
+      config: configId,
+      value: String(value),
     });
   }
 }
@@ -219,13 +210,13 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       syncTagsAndIdentifiers(patient.id, member, patient.instance_tags),
     onSuccess: (_data, { member }) => {
       toast.success(`Kutumba data linked for ${member.name}`);
-      queryClient.invalidateQueries({ queryKey: ["patient-verify"] });
     },
     onError: () => {
       toast.error("Failed to link Kutumba data. Please try again.");
     },
     onSettled: () => {
       setPendingMember(null);
+      queryClient.invalidateQueries({ queryKey: ["patient-verify"] });
     },
   });
 
@@ -275,9 +266,10 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  This will update tags and identifiers for this patient using
+                  This will update <strong>APL/BPL tags</strong> and{" "}
+                  <strong>Ration Card identifier</strong> for this patient using
                   Kutumba data for <strong>{pendingMember?.name}</strong> (RC:{" "}
-                  {pendingMember?.rc_number}).
+                  <strong>{pendingMember?.rc_number}</strong>).
                 </p>
 
                 {pendingMember &&
