@@ -77,7 +77,9 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
         </SheetHeader>
 
         <div className="space-y-2 pt-4">
-          <Label htmlFor="rc-number">Ration Card Number</Label>
+          <Label htmlFor="rc-number" className="text-base">
+            Ration Card Number
+          </Label>
           <div className="flex gap-2">
             <Input
               id="rc-number"

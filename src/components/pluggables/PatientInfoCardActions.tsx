@@ -277,37 +277,46 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
                     const mismatches = detectMismatches(patient, pendingMember);
                     if (mismatches.length === 0) return null;
                     return (
-                      <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950">
-                        <div className="flex items-center gap-2 font-medium text-yellow-800 dark:text-yellow-300">
-                          <AlertTriangle className="size-4" />
-                          Data mismatch detected
+                      <>
+                        <div className="rounded-md border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950">
+                          <div className="flex items-center gap-2 font-medium text-yellow-800 dark:text-yellow-300">
+                            <AlertTriangle className="size-4" />
+                            Data mismatch detected
+                          </div>
+                          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
+                            The selected member&apos;s data differs from the
+                            current patient record. Please verify this is the
+                            correct person.
+                          </p>
                         </div>
-                        <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-400">
-                          The selected member&apos;s data differs from the
-                          current patient record. Please verify this is the
-                          correct person.
-                        </p>
-                        <table className="mt-2 w-full text-sm">
+                        <table className="w-full text-sm">
                           <thead>
-                            <tr className="text-left text-yellow-800 dark:text-yellow-300">
-                              <th className="py-1 pr-2">Field</th>
-                              <th className="py-1 pr-2">Patient</th>
-                              <th className="py-1">Kutumba</th>
+                            <tr className="border-b text-left text-gray-600 dark:text-gray-400">
+                              <th className="py-2 pr-3 font-semibold">Field</th>
+                              <th className="py-2 pr-3 font-semibold">
+                                Current Record
+                              </th>
+                              <th className="py-2 font-semibold">
+                                From Kutumba
+                              </th>
                             </tr>
                           </thead>
-                          <tbody className="text-yellow-700 dark:text-yellow-400">
+                          <tbody className="text-gray-700 dark:text-gray-300">
                             {mismatches.map((m) => (
-                              <tr key={m.field}>
-                                <td className="py-1 pr-2 font-medium">
+                              <tr
+                                key={m.field}
+                                className="border-b border-gray-100 dark:border-gray-800"
+                              >
+                                <td className="py-2 pr-3 font-medium">
                                   {m.field}
                                 </td>
-                                <td className="py-1 pr-2">{m.patient}</td>
-                                <td className="py-1">{m.kutumba}</td>
+                                <td className="py-2 pr-3">{m.patient}</td>
+                                <td className="py-2">{m.kutumba}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
-                      </div>
+                      </>
                     );
                   })()}
               </div>
