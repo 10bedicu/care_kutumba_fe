@@ -1,4 +1,5 @@
 import { lazy } from "react";
+
 import routes from "./routes";
 
 const manifest = {
@@ -8,6 +9,9 @@ const manifest = {
   components: {
     PatientRegistrationForm: lazy(
       () => import("./components/pluggables/PatientRegistrationForm"),
+    ),
+    PatientInfoCardActions: lazy(
+      () => import("./components/pluggables/PatientInfoCardActions"),
     ),
   },
   devices: [],
