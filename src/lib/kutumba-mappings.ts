@@ -12,7 +12,7 @@ export const RC_TYPE_TO_TAG_ID: Record<string, string | undefined> = {
   NPHH: kutumbaConfig.aplTagId,
 };
 
-const ALL_RATION_TAG_IDS = [
+export const ALL_RATION_TAG_IDS = [
   kutumbaConfig.bplTagId,
   kutumbaConfig.aplTagId,
 ].filter(Boolean) as string[];

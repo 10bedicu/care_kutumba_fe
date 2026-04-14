@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import {
   ALL_MANAGED_TAG_IDS,
+  ALL_RATION_TAG_IDS,
   GENDER_MAP,
   IDENTIFIER_FIELD_MAP,
   RC_TYPE_TO_TAG_ID,
@@ -91,7 +92,7 @@ function detectMismatches(
 
   // Tags — show current vs incoming ration card tag
   const currentRationTag = patient.instance_tags.find((t) =>
-    ALL_MANAGED_TAG_IDS.includes(t.id),
+    ALL_RATION_TAG_IDS.includes(t.id),
   );
   const newRationTagId = member.rc_type
     ? RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()]
@@ -148,41 +149,33 @@ async function syncTagsAndIdentifiers(
     .filter((id) => ALL_MANAGED_TAG_IDS.includes(id));
 
   // Determine new tags from the Kutumba member
-  const newTagIds: string[] = [];
+  const newTagIds = Array.from(
+    new Set(
+      [
+        member.rc_type
+          ? RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()]
+          : undefined,
+        member.education_id ? kutumbaConfig.studentUnverifiedTagId : undefined,
+        member.disability_applicant_no
+          ? kutumbaConfig.pwdUnverifiedTagId
+          : undefined,
+      ].filter((id): id is string => Boolean(id)),
+    ),
+  );
 
-  if (member.rc_type) {
-    const tagId = RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()];
-    if (tagId) newTagIds.push(tagId);
-  }
-
-  if (member.education_id && kutumbaConfig.studentUnverifiedTagId) {
-    newTagIds.push(kutumbaConfig.studentUnverifiedTagId);
-  }
-
-  if (member.disability_applicant_no && kutumbaConfig.pwdUnverifiedTagId) {
-    newTagIds.push(kutumbaConfig.pwdUnverifiedTagId);
-  }
-
-  // Remove old managed tags that aren't in the new set
+  const existingTagIds = currentTags.map((t) => t.id);
+  const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
   const tagsToRemove = currentManagedTagIds.filter(
     (id) => !newTagIds.includes(id),
   );
-  if (tagsToRemove.length > 0) {
-    await mutate(patientApis.removeInstanceTags, { pathParams })({
-      tags: tagsToRemove,
-    });
-  }
 
-  // Add new tags that aren't already present
-  const existingTagIds = currentTags.map((t) => t.id);
-  const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
+  // Add new tags first, then update identifiers sequentially, then remove obsolete tags.
   if (tagsToAdd.length > 0) {
     await mutate(patientApis.setInstanceTags, { pathParams })({
       tags: tagsToAdd,
     });
   }
 
-  // Update identifiers
   for (const { configId, field } of IDENTIFIER_FIELD_MAP) {
     if (!configId) continue;
     const value = member[field];
@@ -191,6 +184,13 @@ async function syncTagsAndIdentifiers(
     await mutate(patientApis.updateIdentifier, { pathParams })({
       config: configId,
       value: String(value),
+    });
+  }
+
+  // Only remove obsolete managed tags after all additive updates succeed.
+  if (tagsToRemove.length > 0) {
+    await mutate(patientApis.removeInstanceTags, { pathParams })({
+      tags: tagsToRemove,
     });
   }
 }
