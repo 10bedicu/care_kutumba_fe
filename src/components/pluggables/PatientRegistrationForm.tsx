@@ -63,9 +63,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     member: KutumbaMember,
     allMembers: KutumbaMember[],
   ) => {
-    // Don't overwrite fields if editing an existing patient
-    if (patientId) return;
-
     const opts = { shouldDirty: true };
 
     // Set or clear all Kutumba-fillable fields based on the selected member
@@ -176,6 +173,8 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       submitForm?.();
     }
   };
+
+  if (patientId) return null;
 
   return (
     <div className="care-kutumba-fe-container flex justify-end w-full">
