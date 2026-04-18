@@ -22,6 +22,28 @@ export interface KutumbaLookupResponse {
   status_text: string;
   response_id: string | null;
   request_id: string;
+  request_log_external_id: string | null;
   members: KutumbaMember[];
   error: string | null;
+}
+
+export interface KutumbaMemberSelectionContext {
+  selectedMemberIndex: number;
+  requestLogExternalId: string | null;
+}
+
+export interface PatientLinkRequest {
+  request_log_external_id: string;
+  selected_member_index: number;
+  patient_external_id: string | null;
+  action: "create" | "update";
+}
+
+export interface PatientLinkResponse {
+  success: boolean;
+  external_id: string;
+  request_log_external_id: string;
+  selected_member_index: number;
+  patient_external_id: string | null;
+  action: "create" | "update";
 }
