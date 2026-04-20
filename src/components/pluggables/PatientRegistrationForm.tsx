@@ -179,7 +179,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
           request_log_external_id: context.requestLogExternalId,
           selected_member_index: context.selectedMemberIndex,
           patient_external_id: patientId ?? null,
-          action: patientId ? "update" : "create",
+          action: "create",
         })
         .catch(() => {
           // Non-blocking: link tracking failure should not interrupt
