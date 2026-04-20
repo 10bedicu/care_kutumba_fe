@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import {
   ALL_MANAGED_TAG_IDS,
+  GENDER_MAP,
   IDENTIFIER_FIELD_MAP,
   RC_TYPE_TO_TAG_ID,
   parseKutumbaDate,
@@ -121,12 +122,7 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       form.setValue("date_of_birth", undefined, opts);
     }
 
-    const genderMap: Record<string, string> = {
-      M: "male",
-      F: "female",
-      O: "transgender",
-    };
-    const mappedGender = member.gender ? genderMap[member.gender] : undefined;
+    const mappedGender = member.gender ? GENDER_MAP[member.gender] : undefined;
     form.setValue("gender", mappedGender ?? "", opts);
 
     const cleanAddress = member.address
