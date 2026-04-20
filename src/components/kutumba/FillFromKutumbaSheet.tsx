@@ -16,14 +16,22 @@ import {
 } from "@/components/ui/sheet";
 
 import { kutumbaApis } from "@/apis/kutumba";
-import type { KutumbaMember } from "@/types/kutumba";
+import type {
+  KutumbaMember,
+  KutumbaMemberSelectionContext,
+} from "@/types/kutumba";
 
 import MemberCard from "./MemberCard";
+import MemberCardSkeleton from "./MemberCardSkeleton";
 
 interface FillFromKutumbaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMemberSelect: (member: KutumbaMember, allMembers: KutumbaMember[]) => void;
+  onMemberSelect: (
+    member: KutumbaMember,
+    allMembers: KutumbaMember[],
+    context: KutumbaMemberSelectionContext,
+  ) => void;
   confirmLabel?: string;
 }
 
@@ -52,12 +60,17 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
 
   const handleConfirm = () => {
     if (selectedMemberIndex !== null && members[selectedMemberIndex]) {
-      onMemberSelect(members[selectedMemberIndex], members);
+      onMemberSelect(members[selectedMemberIndex], members, {
+        selectedMemberIndex,
+        requestLogExternalId:
+          lookupMutation.data?.request_log_external_id ?? null,
+      });
       onOpenChange(false);
     }
   };
 
   const members = lookupMutation.data?.members ?? [];
+  const showMemberCardSkeletons = lookupMutation.isPending;
 
   return (
     <Sheet
@@ -107,11 +120,15 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
 
         <ScrollArea className="mt-4 flex-1 overflow-y-auto pr-1">
           <div className="space-y-3">
-            {lookupMutation.isPending && (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="mt-2 text-sm">Searching Kutumba database...</p>
-              </div>
+            {showMemberCardSkeletons && (
+              <>
+                {Array.from({ length: 3 }, (_, index) => (
+                  <MemberCardSkeleton key={index} />
+                ))}
+                <p className="px-1 text-center text-sm text-gray-500">
+                  Searching Kutumba database...
+                </p>
+              </>
             )}
 
             {lookupMutation.isError && (
@@ -121,20 +138,23 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
               </div>
             )}
 
-            {lookupMutation.isSuccess && members.length === 0 && (
-              <div className="py-12 text-center text-sm text-gray-500">
-                No members found for this RC number.
-              </div>
-            )}
+            {lookupMutation.isSuccess &&
+              !showMemberCardSkeletons &&
+              members.length === 0 && (
+                <div className="py-12 text-center text-sm text-gray-500">
+                  No members found for this RC number.
+                </div>
+              )}
 
-            {members.map((member, index) => (
-              <MemberCard
-                key={member.health_id || index}
-                member={member}
-                selected={selectedMemberIndex === index}
-                onSelect={() => setSelectedMemberIndex(index)}
-              />
-            ))}
+            {!showMemberCardSkeletons &&
+              members.map((member, index) => (
+                <MemberCard
+                  key={member.health_id || index}
+                  member={member}
+                  selected={selectedMemberIndex === index}
+                  onSelect={() => setSelectedMemberIndex(index)}
+                />
+              ))}
           </div>
         </ScrollArea>
 

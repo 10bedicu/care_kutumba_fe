@@ -27,9 +27,12 @@ import { Button } from "@/components/ui/button";
 
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
 
-import { patientApis } from "@/apis/kutumba";
+import { kutumbaApis, patientApis } from "@/apis/kutumba";
 import { kutumbaConfig } from "@/config";
-import type { KutumbaMember } from "@/types/kutumba";
+import type {
+  KutumbaMember,
+  KutumbaMemberSelectionContext,
+} from "@/types/kutumba";
 import type { PatientRead } from "@/types/patient";
 import type { TagConfig } from "@/types/tagConfig";
 
@@ -203,11 +206,34 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
   const [pendingMember, setPendingMember] = useState<KutumbaMember | null>(
     null,
   );
+  const [pendingContext, setPendingContext] =
+    useState<KutumbaMemberSelectionContext | null>(null);
   const queryClient = useQueryClient();
 
   const linkMutation = useMutation({
-    mutationFn: ({ member }: { member: KutumbaMember }) =>
-      syncTagsAndIdentifiers(patient.id, member, patient.instance_tags),
+    mutationFn: async ({
+      member,
+      context,
+    }: {
+      member: KutumbaMember;
+      context: KutumbaMemberSelectionContext | null;
+    }) => {
+      await syncTagsAndIdentifiers(patient.id, member, patient.instance_tags);
+
+      if (context?.requestLogExternalId) {
+        try {
+          await kutumbaApis.createPatientLink({
+            request_log_external_id: context.requestLogExternalId,
+            selected_member_index: context.selectedMemberIndex,
+            patient_external_id: patient.id,
+            action: "update",
+          });
+        } catch {
+          // Non-blocking: link tracking failure should not surface as
+          // a user-facing error after a successful sync.
+        }
+      }
+    },
     onSuccess: (_data, { member }) => {
       toast.success(`Kutumba data linked for ${member.name}`);
     },
@@ -216,17 +242,26 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     },
     onSettled: () => {
       setPendingMember(null);
+      setPendingContext(null);
       queryClient.invalidateQueries({ queryKey: ["patient-verify"] });
     },
   });
 
-  const handleMemberSelect = (member: KutumbaMember) => {
+  const handleMemberSelect = (
+    member: KutumbaMember,
+    _allMembers: KutumbaMember[],
+    context: KutumbaMemberSelectionContext,
+  ) => {
     setPendingMember(member);
+    setPendingContext(context);
   };
 
   const handleConfirmLink = () => {
     if (pendingMember) {
-      linkMutation.mutate({ member: pendingMember });
+      linkMutation.mutate({
+        member: pendingMember,
+        context: pendingContext,
+      });
     }
   };
 
@@ -257,7 +292,10 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       <AlertDialog
         open={pendingMember !== null && !linkMutation.isPending}
         onOpenChange={(open) => {
-          if (!open) setPendingMember(null);
+          if (!open) {
+            setPendingMember(null);
+            setPendingContext(null);
+          }
         }}
       >
         <AlertDialogContent>
