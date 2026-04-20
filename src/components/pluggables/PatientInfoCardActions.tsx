@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Link2, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import { FC, useState } from "react";
 import { toast } from "sonner";
 
@@ -210,7 +210,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     useState<KutumbaMemberSelectionContext | null>(null);
   const queryClient = useQueryClient();
 
-  const linkMutation = useMutation({
+  const syncMutation = useMutation({
     mutationFn: async ({
       member,
       context,
@@ -235,10 +235,10 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       }
     },
     onSuccess: (_data, { member }) => {
-      toast.success(`Kutumba data linked for ${member.name}`);
+      toast.success(`Kutumba data synced for ${member.name}`);
     },
     onError: () => {
-      toast.error("Failed to link Kutumba data. Please try again.");
+      toast.error("Failed to sync Kutumba data. Please try again.");
     },
     onSettled: () => {
       setPendingMember(null);
@@ -256,9 +256,9 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     setPendingContext(context);
   };
 
-  const handleConfirmLink = () => {
+  const handleConfirmSync = () => {
     if (pendingMember) {
-      linkMutation.mutate({
+      syncMutation.mutate({
         member: pendingMember,
         context: pendingContext,
       });
@@ -272,25 +272,26 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
         variant="outline"
         className="text-primary border-primary"
         onClick={() => setSheetOpen(true)}
-        disabled={linkMutation.isPending}
+        disabled={syncMutation.isPending}
       >
-        {linkMutation.isPending ? (
+        {syncMutation.isPending ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
-          <Link2 className="size-4" />
+          <RefreshCw className="size-4" />
         )}
-        Link Kutumba
+        Sync from Kutumba
       </Button>
 
       <FillFromKutumbaSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onMemberSelect={handleMemberSelect}
-        confirmLabel="Link Patient"
+        title="Sync from Kutumba"
+        confirmLabel="Sync Patient"
       />
 
       <AlertDialog
-        open={pendingMember !== null && !linkMutation.isPending}
+        open={pendingMember !== null && !syncMutation.isPending}
         onOpenChange={(open) => {
           if (!open) {
             setPendingMember(null);
@@ -300,11 +301,11 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Link Kutumba Data?</AlertDialogTitle>
+            <AlertDialogTitle>Sync from Kutumba?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  This will update <strong>APL/BPL tags</strong> and{" "}
+                  This will sync <strong>APL/BPL tags</strong> and{" "}
                   <strong>Ration Card identifier</strong> for this patient using
                   Kutumba data for <strong>{pendingMember?.name}</strong> (RC:{" "}
                   <strong>{pendingMember?.rc_number}</strong>).
@@ -362,7 +363,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmLink}>
+            <AlertDialogAction onClick={handleConfirmSync}>
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
