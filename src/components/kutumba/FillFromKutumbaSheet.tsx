@@ -32,6 +32,7 @@ interface FillFromKutumbaSheetProps {
     allMembers: KutumbaMember[],
     context: KutumbaMemberSelectionContext,
   ) => void;
+  title?: string;
   confirmLabel?: string;
 }
 
@@ -39,6 +40,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
   open,
   onOpenChange,
   onMemberSelect,
+  title = "Fill from Kutumba",
   confirmLabel = "Register Patient",
 }) => {
   const [rcNumber, setRcNumber] = useState("");
@@ -82,7 +84,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
     >
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Fill from Kutumba</SheetTitle>
+          <SheetTitle>{title}</SheetTitle>
           <SheetDescription>
             Enter a Ration Card number to search for family members in the
             Kutumba database.
