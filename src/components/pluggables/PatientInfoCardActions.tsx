@@ -203,6 +203,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
   className,
 }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetInstanceId, setSheetInstanceId] = useState(0);
   const [pendingMember, setPendingMember] = useState<KutumbaMember | null>(
     null,
   );
@@ -235,6 +236,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       }
     },
     onSuccess: (_data, { member }) => {
+      setSheetInstanceId((id) => id + 1);
       toast.success(`Kutumba data synced for ${member.name}`);
     },
     onError: () => {
@@ -283,6 +285,7 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
       </Button>
 
       <FillFromKutumbaSheet
+        key={sheetInstanceId}
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onMemberSelect={handleMemberSelect}
