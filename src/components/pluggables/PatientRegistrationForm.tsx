@@ -15,12 +15,8 @@ import { Button } from "@/components/ui/button";
 
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
 
-import { kutumbaApis } from "@/apis/kutumba";
 import { kutumbaConfig } from "@/config";
-import type {
-  KutumbaMember,
-  KutumbaMemberSelectionContext,
-} from "@/types/kutumba";
+import type { KutumbaMember } from "@/types/kutumba";
 
 type PatientRegistrationFormProps = {
   form: UseFormReturn;
@@ -67,7 +63,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
   const handleMemberSelect = (
     member: KutumbaMember,
     allMembers: KutumbaMember[],
-    context: KutumbaMemberSelectionContext,
   ) => {
     const opts = { shouldDirty: true };
 
@@ -168,24 +163,6 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     fillIdentifiers(form, member);
 
     toast.success(`Details filled from Kutumba for ${member.name}`);
-
-    // Record the link between this Kutumba lookup and the patient action.
-    // For the create flow we don't yet have a patient_external_id (the host
-    // form hasn't been submitted), so we record action="create" with a null
-    // patient. The update flow passes the existing patientId.
-    if (context.requestLogExternalId) {
-      kutumbaApis
-        .createPatientLink({
-          request_log_external_id: context.requestLogExternalId,
-          selected_member_index: context.selectedMemberIndex,
-          patient_external_id: patientId ?? null,
-          action: "create",
-        })
-        .catch(() => {
-          // Non-blocking: link tracking failure should not interrupt
-          // the user's registration flow.
-        });
-    }
 
     if (kutumbaConfig.autoSubmitOnFill) {
       toast.info("Auto-submitting form after filling from Kutumba");
