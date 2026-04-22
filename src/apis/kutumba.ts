@@ -1,10 +1,6 @@
 import { HttpMethod, apiRoutes, mutate } from "@/lib/request";
 
-import type {
-  KutumbaLookupResponse,
-  PatientLinkRequest,
-  PatientLinkResponse,
-} from "@/types/kutumba";
+import type { KutumbaLookupResponse } from "@/types/kutumba";
 import type { PatientRead } from "@/types/patient";
 
 const kutumbaRoutes = apiRoutes({
@@ -13,12 +9,6 @@ const kutumbaRoutes = apiRoutes({
     path: "/api/care_kutumba/beneficiary/lookup/",
     TRequest: {} as { rc_number: string },
     TResponse: {} as KutumbaLookupResponse,
-  },
-  createPatientLink: {
-    method: HttpMethod.POST,
-    path: "/api/care_kutumba/patient_link/",
-    TRequest: {} as PatientLinkRequest,
-    TResponse: {} as PatientLinkResponse,
   },
 });
 
@@ -45,7 +35,6 @@ const patientRoutes = apiRoutes({
 
 export const kutumbaApis = {
   lookupByRcNumber: mutate(kutumbaRoutes.lookupByRcNumber),
-  createPatientLink: mutate(kutumbaRoutes.createPatientLink),
 };
 
 export const patientApis = {

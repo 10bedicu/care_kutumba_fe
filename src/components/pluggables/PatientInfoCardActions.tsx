@@ -27,12 +27,9 @@ import { Button } from "@/components/ui/button";
 
 import FillFromKutumbaSheet from "@/components/kutumba/FillFromKutumbaSheet";
 
-import { kutumbaApis, patientApis } from "@/apis/kutumba";
+import { patientApis } from "@/apis/kutumba";
 import { kutumbaConfig } from "@/config";
-import type {
-  KutumbaMember,
-  KutumbaMemberSelectionContext,
-} from "@/types/kutumba";
+import type { KutumbaMember } from "@/types/kutumba";
 import type { PatientRead } from "@/types/patient";
 import type { TagConfig } from "@/types/tagConfig";
 
@@ -207,33 +204,11 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
   const [pendingMember, setPendingMember] = useState<KutumbaMember | null>(
     null,
   );
-  const [pendingContext, setPendingContext] =
-    useState<KutumbaMemberSelectionContext | null>(null);
   const queryClient = useQueryClient();
 
   const syncMutation = useMutation({
-    mutationFn: async ({
-      member,
-      context,
-    }: {
-      member: KutumbaMember;
-      context: KutumbaMemberSelectionContext | null;
-    }) => {
+    mutationFn: async ({ member }: { member: KutumbaMember }) => {
       await syncTagsAndIdentifiers(patient.id, member, patient.instance_tags);
-
-      if (context?.requestLogExternalId) {
-        try {
-          await kutumbaApis.createPatientLink({
-            request_log_external_id: context.requestLogExternalId,
-            selected_member_index: context.selectedMemberIndex,
-            patient_external_id: patient.id,
-            action: "update",
-          });
-        } catch {
-          // Non-blocking: link tracking failure should not surface as
-          // a user-facing error after a successful sync.
-        }
-      }
     },
     onSuccess: (_data, { member }) => {
       setSheetInstanceId((id) => id + 1);
@@ -244,26 +219,17 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     },
     onSettled: () => {
       setPendingMember(null);
-      setPendingContext(null);
       queryClient.invalidateQueries({ queryKey: ["patient-verify"] });
     },
   });
 
-  const handleMemberSelect = (
-    member: KutumbaMember,
-    _allMembers: KutumbaMember[],
-    context: KutumbaMemberSelectionContext,
-  ) => {
+  const handleMemberSelect = (member: KutumbaMember) => {
     setPendingMember(member);
-    setPendingContext(context);
   };
 
   const handleConfirmSync = () => {
     if (pendingMember) {
-      syncMutation.mutate({
-        member: pendingMember,
-        context: pendingContext,
-      });
+      syncMutation.mutate({ member: pendingMember });
     }
   };
 
@@ -298,7 +264,6 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
         onOpenChange={(open) => {
           if (!open) {
             setPendingMember(null);
-            setPendingContext(null);
           }
         }}
       >
