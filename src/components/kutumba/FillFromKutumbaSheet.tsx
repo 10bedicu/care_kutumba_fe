@@ -16,10 +16,7 @@ import {
 } from "@/components/ui/sheet";
 
 import { kutumbaApis } from "@/apis/kutumba";
-import type {
-  KutumbaMember,
-  KutumbaMemberSelectionContext,
-} from "@/types/kutumba";
+import type { KutumbaMember } from "@/types/kutumba";
 
 import MemberCard from "./MemberCard";
 import MemberCardSkeleton from "./MemberCardSkeleton";
@@ -27,11 +24,7 @@ import MemberCardSkeleton from "./MemberCardSkeleton";
 interface FillFromKutumbaSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onMemberSelect: (
-    member: KutumbaMember,
-    allMembers: KutumbaMember[],
-    context: KutumbaMemberSelectionContext,
-  ) => void;
+  onMemberSelect: (member: KutumbaMember, allMembers: KutumbaMember[]) => void;
   title?: string;
   confirmLabel?: string;
 }
@@ -62,11 +55,7 @@ const FillFromKutumbaSheet: FC<FillFromKutumbaSheetProps> = ({
 
   const handleConfirm = () => {
     if (selectedMemberIndex !== null && members[selectedMemberIndex]) {
-      onMemberSelect(members[selectedMemberIndex], members, {
-        selectedMemberIndex,
-        requestLogExternalId:
-          lookupMutation.data?.request_log_external_id ?? null,
-      });
+      onMemberSelect(members[selectedMemberIndex], members);
       onOpenChange(false);
     }
   };
