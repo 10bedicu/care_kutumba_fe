@@ -1,11 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Loader2,
-  RefreshCw,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +13,7 @@ import {
 } from "@/lib/kutumba-mappings";
 import { mutate } from "@/lib/request";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -246,12 +241,13 @@ const ValueText: FC<{
   muted?: boolean;
 }> = ({ value, isTag, muted }) => {
   if (isTag) {
+    // Match care_fe `Badge` (variant=secondary, size=sm).
     return (
       <span
         className={
           muted
-            ? "rounded-md border border-gray-300 bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-            : "rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+            ? "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-500"
+            : "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-900"
         }
       >
         {value}
@@ -262,8 +258,8 @@ const ValueText: FC<{
     <span
       className={
         muted
-          ? "font-mono text-sm text-gray-500 dark:text-gray-400"
-          : "font-mono text-sm font-semibold text-gray-900 dark:text-gray-100"
+          ? "text-sm text-gray-500"
+          : "text-sm text-gray-900 dark:text-gray-100"
       }
     >
       {value}
@@ -370,10 +366,9 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
                     <AlertDialogTitle>
                       Sync ration card details from Kutumba
                     </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Updates the ration card tag and identifiers only. Other
-                      patient details (name, gender, date of birth) are not
-                      modified.
+                    <AlertDialogDescription className="sr-only">
+                      Review the ration card tag and identifier changes that
+                      will be applied to this patient before confirming.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
 
@@ -440,67 +435,55 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
 
                     {/* Section 2: identity verification (only when relevant) */}
                     {needsIdentityConfirm && (
-                      <section
-                        aria-labelledby="kutumba-sync-identity-heading"
-                        className="rounded-md border border-yellow-300 bg-yellow-50 p-3 dark:border-yellow-700 dark:bg-yellow-950/40"
-                      >
-                        <h3
-                          id="kutumba-sync-identity-heading"
-                          className="flex items-center gap-2 text-sm font-semibold text-yellow-800 dark:text-yellow-300"
-                        >
-                          <AlertTriangle className="size-4" />
-                          Verify this is the same person
-                        </h3>
-                        <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-400">
-                          The fields below differ between the patient record and
-                          the selected Kutumba member.{" "}
-                          <strong>
-                            These will NOT be changed by this sync
-                          </strong>{" "}
-                          — we&apos;re only asking you to confirm you picked the
-                          correct person.
-                        </p>
-                        <table className="mt-3 w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-yellow-300/60 text-left text-xs uppercase tracking-wide text-yellow-800/70 dark:border-yellow-700/60 dark:text-yellow-300/70">
-                              <th className="py-1 pr-3 font-semibold">Field</th>
-                              <th className="py-1 pr-3 font-semibold">
-                                Patient record
-                              </th>
-                              <th className="py-1 font-semibold">Kutumba</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-gray-700 dark:text-gray-300">
-                            {identityMismatches.map((m) => (
-                              <tr
-                                key={m.field}
-                                className="border-b border-yellow-200/60 last:border-0 dark:border-yellow-800/40"
-                              >
-                                <td className="py-2 pr-3 font-medium">
-                                  {m.field}
-                                </td>
-                                <td className="py-2 pr-3">{m.patient}</td>
-                                <td className="py-2">{m.kutumba}</td>
+                      <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-50">
+                        <AlertTriangle />
+                        <AlertTitle className="text-base font-semibold">
+                          Details don't match
+                        </AlertTitle>
+                        <AlertDescription className="col-span-2 col-start-1 mt-2 text-amber-900 dark:text-amber-50">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-amber-300/60 text-left text-xs uppercase tracking-wide text-amber-900/70 bg-amber-100">
+                                <th className="px-3 py-2 font-semibold">
+                                  Field
+                                </th>
+                                <th className="px-3 py-2 font-semibold">
+                                  Patient record
+                                </th>
+                                <th className="px-3 py-2 font-semibold">
+                                  Kutumba
+                                </th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {identityMismatches.map((m) => (
+                                <tr
+                                  key={m.field}
+                                  className="border-b border-amber-200/60 last:border-0 dark:border-amber-800/40"
+                                >
+                                  <td className="px-3 py-2 font-medium">
+                                    {m.field}
+                                  </td>
+                                  <td className="px-3 py-2">{m.patient}</td>
+                                  <td className="px-3 py-2">{m.kutumba}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
 
-                        <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-yellow-900 dark:text-yellow-200">
-                          <input
-                            type="checkbox"
-                            className="mt-0.5 size-4 rounded border-yellow-400 text-primary focus:ring-primary"
-                            checked={identityVerified}
-                            onChange={(e) =>
-                              setIdentityVerified(e.target.checked)
-                            }
-                          />
-                          <span className="flex items-center gap-1">
-                            <ShieldCheck className="size-4" />
-                            I&apos;ve verified this is the correct person
-                          </span>
-                        </label>
-                      </section>
+                          <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-amber-900 dark:text-amber-50">
+                            <input
+                              type="checkbox"
+                              className="size-4 rounded border-amber-400 text-primary focus:ring-primary"
+                              checked={identityVerified}
+                              onChange={(e) =>
+                                setIdentityVerified(e.target.checked)
+                              }
+                            />
+                            I've verified this is the correct person
+                          </label>
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </div>
 
@@ -511,11 +494,6 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
                         <AlertDialogAction
                           onClick={handleConfirmSync}
                           disabled={confirmDisabled}
-                          className={
-                            needsIdentityConfirm && identityVerified
-                              ? "bg-amber-600 hover:bg-amber-700 focus:ring-amber-600"
-                              : undefined
-                          }
                         >
                           {confirmLabel}
                         </AlertDialogAction>
