@@ -117,7 +117,7 @@ function computeSyncPreview(
   // ----- Fields the sync will actually write -----
 
   // Ration card tag
-  const currentRationTag = patient.instance_tags.find((t) =>
+  const currentRationTags = patient.instance_tags.filter((t) =>
     ALL_RATION_TAG_IDS.includes(t.id),
   );
   const newRationTagId = member.rc_type
@@ -125,7 +125,10 @@ function computeSyncPreview(
     : undefined;
   if (newRationTagId) {
     const incomingDisplay = member.rc_type!.toUpperCase();
-    if (!currentRationTag) {
+    const matching = currentRationTags.find((t) => t.id === newRationTagId);
+    const stale = currentRationTags.filter((t) => t.id !== newRationTagId);
+
+    if (currentRationTags.length === 0) {
       changes.push({
         field: "Ration Card Type",
         current: null,
@@ -133,10 +136,20 @@ function computeSyncPreview(
         kind: "added",
         isTag: true,
       });
-    } else if (currentRationTag.id !== newRationTagId) {
+    } else if (!matching) {
+      // Patient has ration tag(s), none match — replacing them all.
       changes.push({
         field: "Ration Card Type",
-        current: currentRationTag.display,
+        current: stale.map((t) => t.display).join(", "),
+        incoming: incomingDisplay,
+        kind: "updated",
+        isTag: true,
+      });
+    } else if (stale.length > 0) {
+      // Correct tag is present, but extra stale ration tags will be removed.
+      changes.push({
+        field: "Ration Card Type",
+        current: currentRationTags.map((t) => t.display).join(", "),
         incoming: incomingDisplay,
         kind: "updated",
         isTag: true,
@@ -241,16 +254,22 @@ const ValueText: FC<{
   muted?: boolean;
 }> = ({ value, isTag, muted }) => {
   if (isTag) {
-    // Match care_fe `Badge` (variant=secondary, size=sm).
+    // Match care_fe `Badge` (variant=secondary, size=sm). Render each
+    // comma-separated value as its own badge.
+    const badgeClass = muted
+      ? "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-500"
+      : "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-900";
+    const parts = value
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
     return (
-      <span
-        className={
-          muted
-            ? "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-500"
-            : "inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-2.5 py-px text-sm font-medium text-gray-900"
-        }
-      >
-        {value}
+      <span className="inline-flex flex-wrap items-center gap-1">
+        {parts.map((p) => (
+          <span key={p} className={badgeClass}>
+            {p}
+          </span>
+        ))}
       </span>
     );
   }
