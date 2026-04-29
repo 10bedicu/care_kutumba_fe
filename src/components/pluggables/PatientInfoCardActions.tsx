@@ -258,8 +258,8 @@ const ValueText: FC<{
     <span
       className={
         muted
-          ? "text-sm text-gray-500"
-          : "text-sm text-gray-900 dark:text-gray-100"
+          ? "text-sm text-gray-500 font-medium"
+          : "text-sm text-gray-900 font-medium"
       }
     >
       {value}
@@ -288,9 +288,9 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
     mutationFn: async ({ member }: { member: KutumbaMember }) => {
       await syncTagsAndIdentifiers(patient.id, member, patient.instance_tags);
     },
-    onSuccess: (_data, { member }) => {
+    onSuccess: () => {
       setSheetInstanceId((id) => id + 1);
-      toast.success(`Kutumba data synced for ${member.name}`);
+      toast.success(`Synced ${patient.name} from Kutumba`);
     },
     onError: () => {
       toast.error("Failed to sync Kutumba data. Please try again.");
@@ -433,11 +433,12 @@ const PatientInfoCardActions: FC<PatientInfoCardActionsProps> = ({
                       )}
                     </section>
 
-                    {/* Section 2: identity verification (only when relevant) */}
-                    {needsIdentityConfirm && (
+                    {/* Section 2: identity verification (only when there are
+                        actual changes to apply AND identity differs) */}
+                    {hasChanges && needsIdentityConfirm && (
                       <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-50">
-                        <AlertTriangle />
-                        <AlertTitle className="text-base font-semibold">
+                        <AlertTitle className="col-start-1 col-span-2 flex items-center gap-2 text-sm font-semibold">
+                          <AlertTriangle className="size-4" />
                           Details don't match
                         </AlertTitle>
                         <AlertDescription className="col-span-2 col-start-1 mt-2 text-amber-900 dark:text-amber-50">
