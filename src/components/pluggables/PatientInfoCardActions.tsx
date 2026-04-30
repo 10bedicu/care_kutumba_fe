@@ -77,40 +77,52 @@ function computeSyncPreview(
   const changes: ChangeRow[] = [];
 
   // ----- Identity-only fields (never written by sync) -----
+  // Warn whenever the two sides differ, including when one side is empty,
+  // so the user can spot missing data on either side. Empty values render as "N/A".
 
   if (
-    member.name &&
-    patient.name &&
-    member.name.toLowerCase() !== patient.name.toLowerCase()
+    (member.name ?? "").toLowerCase() !== (patient.name ?? "").toLowerCase()
   ) {
     identityMismatches.push({
       field: "Name",
-      patient: patient.name,
-      kutumba: member.name,
+      patient: patient.name || "N/A",
+      kutumba: member.name || "N/A",
     });
   }
 
   const kutumbaGender = member.gender ? GENDER_MAP[member.gender] : undefined;
-  if (kutumbaGender && patient.gender && kutumbaGender !== patient.gender) {
+  if ((kutumbaGender ?? "") !== (patient.gender ?? "")) {
     identityMismatches.push({
       field: "Gender",
-      patient: patient.gender,
-      kutumba: kutumbaGender,
+      patient: patient.gender || "N/A",
+      kutumba: kutumbaGender || "N/A",
     });
   }
 
   const kutumbaDob = member.date_of_birth
     ? parseKutumbaDate(member.date_of_birth)
     : undefined;
-  if (
-    kutumbaDob &&
-    patient.date_of_birth &&
-    kutumbaDob !== patient.date_of_birth
-  ) {
+  if ((kutumbaDob ?? "") !== (patient.date_of_birth ?? "")) {
     identityMismatches.push({
       field: "Date of Birth",
-      patient: patient.date_of_birth,
-      kutumba: kutumbaDob,
+      patient: patient.date_of_birth || "N/A",
+      kutumba: kutumbaDob || "N/A",
+    });
+  }
+
+  // Phone number — warning only, sync never overwrites it.
+  // Compare on last 10 digits to ignore +91 prefix and formatting differences.
+  const normalisePhone = (v?: string | null) => {
+    const digits = v ? v.replace(/\D/g, "") : "";
+    return digits.length >= 10 ? digits.slice(-10) : "";
+  };
+  const kutumbaMobile = normalisePhone(member.mobile_no);
+  const patientMobile = normalisePhone(patient.phone_number);
+  if (kutumbaMobile !== patientMobile) {
+    identityMismatches.push({
+      field: "Phone Number",
+      patient: patient.phone_number || "N/A",
+      kutumba: member.mobile_no || "N/A",
     });
   }
 
