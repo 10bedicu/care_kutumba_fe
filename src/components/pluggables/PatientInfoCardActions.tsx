@@ -112,9 +112,10 @@ function computeSyncPreview(
 
   // Phone number — warning only, sync never overwrites it.
   // Compare on last 10 digits to ignore +91 prefix and formatting differences.
-  // Warns even if Kutumba returned no mobile number, so the user can spot it.
-  const normalisePhone = (v?: string | null) =>
-    v ? v.replace(/\D/g, "").slice(-10) : "";
+  const normalisePhone = (v?: string | null) => {
+    const digits = v ? v.replace(/\D/g, "") : "";
+    return digits.length >= 10 ? digits.slice(-10) : "";
+  };
   const kutumbaMobile = normalisePhone(member.mobile_no);
   const patientMobile = normalisePhone(patient.phone_number);
   if (kutumbaMobile !== patientMobile) {
