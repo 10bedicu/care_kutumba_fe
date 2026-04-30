@@ -78,7 +78,7 @@ function computeSyncPreview(
 
   // ----- Identity-only fields (never written by sync) -----
   // Warn whenever the two sides differ, including when one side is empty,
-  // so the user can spot missing data on either side. Empty values render as "—".
+  // so the user can spot missing data on either side. Empty values render as "N/A".
 
   if (
     (member.name ?? "").toLowerCase() !== (patient.name ?? "").toLowerCase()
