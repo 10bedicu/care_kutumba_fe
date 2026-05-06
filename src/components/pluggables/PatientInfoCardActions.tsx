@@ -8,6 +8,7 @@ import {
   ALL_RATION_TAG_IDS,
   GENDER_MAP,
   IDENTIFIER_FIELD_MAP,
+  RC_TYPE_TO_DISPLAY_NAME,
   RC_TYPE_TO_TAG_ID,
   parseKutumbaDate,
 } from "@/lib/kutumba-mappings";
@@ -151,7 +152,9 @@ function computeSyncPreview(
     ? RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()]
     : undefined;
   if (newRationTagId) {
-    const incomingDisplay = member.rc_type!.toUpperCase();
+    const incomingDisplay =
+      RC_TYPE_TO_DISPLAY_NAME[member.rc_type.toUpperCase()] ||
+      member.rc_type.toUpperCase();
     const matching = currentRationTags.find((t) => t.id === newRationTagId);
     const stale = currentRationTags.filter((t) => t.id !== newRationTagId);
 
