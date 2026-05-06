@@ -134,9 +134,10 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     form.setValue("address", cleanAddress, opts);
     form.setValue("permanent_address", cleanAddress, opts);
 
+    const pincodeNum = member.pincode ? Number(member.pincode) : undefined;
     form.setValue(
       "pincode",
-      member.pincode ? Number(member.pincode) : undefined,
+      Number.isFinite(pincodeNum) ? pincodeNum : undefined,
       opts,
     );
 
@@ -147,9 +148,10 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
       (id) => !ALL_MANAGED_TAG_IDS.includes(id),
     );
     const newTags = [...filteredTags];
+    const normalizedRcType = member.rc_type?.trim().toUpperCase();
 
-    if (member.rc_type) {
-      const tagId = RC_TYPE_TO_TAG_ID[member.rc_type.toUpperCase()];
+    if (normalizedRcType) {
+      const tagId = RC_TYPE_TO_TAG_ID[normalizedRcType];
       if (tagId) newTags.push(tagId);
     }
 
