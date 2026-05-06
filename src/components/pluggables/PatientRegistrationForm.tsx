@@ -134,12 +134,13 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     form.setValue("address", cleanAddress, opts);
     form.setValue("permanent_address", cleanAddress, opts);
 
-    const pincodeNum = member.pincode ? Number(member.pincode) : undefined;
-    form.setValue(
-      "pincode",
-      Number.isFinite(pincodeNum) ? pincodeNum : undefined,
-      opts,
-    );
+    const normalizedPincode = member.pincode?.trim();
+    const pincodeNum =
+      normalizedPincode && /^\d+$/.test(normalizedPincode)
+        ? Number(normalizedPincode)
+        : undefined;
+
+    form.setValue("pincode", pincodeNum, opts);
 
     // Auto-select tags based on member data
     // Remove all previously managed tags, then re-apply based on current member
