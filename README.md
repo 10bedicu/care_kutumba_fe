@@ -25,15 +25,14 @@ Detailed docs are maintained on the internal Confluence (access required):
 ## Quick start
 
 
-​```bash
-
+```sh
 npm install
 
 cp .env.example .env   # fill in REACT_* vars (see FE Dev Setup)
 
 npm run start
-
-​```
+```
+​
 
 For full setup, environment variables, and host integration steps, see the
 [Care Kutumba FE — Dev Setup](https://openhealthcarenetwork.atlassian.net/wiki/spaces/CPLUG/pages/45252655/Care+Kutumba+FE+dev+setup)
