@@ -4,13 +4,17 @@ import type { KutumbaMember } from "@/types/kutumba";
 /**
  * Mapping from Kutumba rc_type values to env-configured tag IDs.
  * PHH (Priority Household) maps to BPL, NPHH (Non-Priority) maps to APL.
+ *
+ * Computed lazily so values reflect the host's runtime plug config
+ * (`window.__CARE_PLUGIN_RUNTIME__`), which is populated after this module
+ * is first evaluated.
  */
-export const RC_TYPE_TO_TAG_ID: Record<string, string | undefined> = {
+export const getRcTypeToTagId = (): Record<string, string | undefined> => ({
   BPL: kutumbaConfig.bplTagId,
   APL: kutumbaConfig.aplTagId,
   PHH: kutumbaConfig.bplTagId,
   NPHH: kutumbaConfig.aplTagId,
-};
+});
 
 /**
  * Display names for rc_type values.
@@ -24,25 +28,24 @@ export const RC_TYPE_TO_DISPLAY_NAME: Record<string, string> = {
   NPHH: "APL",
 };
 
-export const ALL_RATION_TAG_IDS = [
-  kutumbaConfig.bplTagId,
-  kutumbaConfig.aplTagId,
-].filter(Boolean) as string[];
+export const getAllRationTagIds = (): string[] =>
+  [kutumbaConfig.bplTagId, kutumbaConfig.aplTagId].filter(Boolean) as string[];
 
 /** All tag IDs that this plugin manages — cleared before re-applying. */
-export const ALL_MANAGED_TAG_IDS = [
-  ...ALL_RATION_TAG_IDS,
-  kutumbaConfig.studentUnverifiedTagId,
-  kutumbaConfig.pwdUnverifiedTagId,
-].filter(Boolean) as string[];
+export const getAllManagedTagIds = (): string[] =>
+  [
+    ...getAllRationTagIds(),
+    kutumbaConfig.studentUnverifiedTagId,
+    kutumbaConfig.pwdUnverifiedTagId,
+  ].filter(Boolean) as string[];
 
 /**
  * Identifier config ID → Kutumba member field mapping.
  */
-export const IDENTIFIER_FIELD_MAP: {
+export const getIdentifierFieldMap = (): {
   configId: string | undefined;
   field: keyof KutumbaMember;
-}[] = [
+}[] => [
   { configId: kutumbaConfig.rcNumberIdentifierId, field: "rc_number" },
   { configId: kutumbaConfig.healthIdIdentifierId, field: "health_id" },
   { configId: kutumbaConfig.educationIdIdentifierId, field: "education_id" },
