@@ -145,9 +145,8 @@ const PatientRegistrationForm: FC<PatientRegistrationFormProps> = ({
     // Auto-select tags based on member data
     // Remove all previously managed tags, then re-apply based on current member
     const currentTags: string[] = form.getValues("tags") ?? [];
-    const filteredTags = currentTags.filter(
-      (id) => !getAllManagedTagIds().includes(id),
-    );
+    const managedTagIdSet = new Set(getAllManagedTagIds());
+    const filteredTags = currentTags.filter((id) => !managedTagIdSet.has(id));
     const newTags = [...filteredTags];
     const normalizedRcType = member.rc_type?.trim().toUpperCase();
 

@@ -146,8 +146,9 @@ function computeSyncPreview(
   // ----- Fields the sync will actually write -----
 
   // Ration card tag
+  const rationTagIdSet = new Set(getAllRationTagIds());
   const currentRationTags = patient.instance_tags.filter((t) =>
-    getAllRationTagIds().includes(t.id),
+    rationTagIdSet.has(t.id),
   );
   const newRationTagId = normalizedRcType
     ? getRcTypeToTagId()[normalizedRcType]
@@ -232,8 +233,9 @@ function computeSyncPreview(
     ),
   );
   const existingTagIds = patient.instance_tags.map((t) => t.id);
+  const managedTagIdSet = new Set(getAllManagedTagIds());
   const currentManagedTagIds = existingTagIds.filter((id) =>
-    getAllManagedTagIds().includes(id),
+    managedTagIdSet.has(id),
   );
   const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
   const tagsToRemove = currentManagedTagIds.filter(
