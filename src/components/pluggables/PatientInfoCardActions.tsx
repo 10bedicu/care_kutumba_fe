@@ -4,12 +4,12 @@ import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import {
-  ALL_MANAGED_TAG_IDS,
-  ALL_RATION_TAG_IDS,
   GENDER_MAP,
-  IDENTIFIER_FIELD_MAP,
   RC_TYPE_TO_DISPLAY_NAME,
-  RC_TYPE_TO_TAG_ID,
+  getAllManagedTagIds,
+  getAllRationTagIds,
+  getIdentifierFieldMap,
+  getRcTypeToTagId,
   parseKutumbaDate,
 } from "@/lib/kutumba-mappings";
 import { mutate } from "@/lib/request";
@@ -146,11 +146,12 @@ function computeSyncPreview(
   // ----- Fields the sync will actually write -----
 
   // Ration card tag
+  const rationTagIdSet = new Set(getAllRationTagIds());
   const currentRationTags = patient.instance_tags.filter((t) =>
-    ALL_RATION_TAG_IDS.includes(t.id),
+    rationTagIdSet.has(t.id),
   );
   const newRationTagId = normalizedRcType
-    ? RC_TYPE_TO_TAG_ID[normalizedRcType]
+    ? getRcTypeToTagId()[normalizedRcType]
     : undefined;
   if (newRationTagId) {
     const incomingDisplay =
@@ -189,7 +190,7 @@ function computeSyncPreview(
 
   // Identifiers — RC number, health ID, education ID
   const identifiers = patient.instance_identifiers ?? [];
-  for (const { configId, field } of IDENTIFIER_FIELD_MAP) {
+  for (const { configId, field } of getIdentifierFieldMap()) {
     if (!configId) continue;
     const kutumbaValue = member[field];
     if (!kutumbaValue) continue;
@@ -223,7 +224,7 @@ function computeSyncPreview(
   const newTagIds = Array.from(
     new Set(
       [
-        normalizedRcType ? RC_TYPE_TO_TAG_ID[normalizedRcType] : undefined,
+        normalizedRcType ? getRcTypeToTagId()[normalizedRcType] : undefined,
         member.education_id ? kutumbaConfig.studentUnverifiedTagId : undefined,
         member.disability_applicant_no
           ? kutumbaConfig.pwdUnverifiedTagId
@@ -232,8 +233,9 @@ function computeSyncPreview(
     ),
   );
   const existingTagIds = patient.instance_tags.map((t) => t.id);
+  const managedTagIdSet = new Set(getAllManagedTagIds());
   const currentManagedTagIds = existingTagIds.filter((id) =>
-    ALL_MANAGED_TAG_IDS.includes(id),
+    managedTagIdSet.has(id),
   );
   const tagsToAdd = newTagIds.filter((id) => !existingTagIds.includes(id));
   const tagsToRemove = currentManagedTagIds.filter(
